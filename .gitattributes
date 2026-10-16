@@ -1,0 +1,7 @@
+# Normalise line endings to LF in the repository
+* text=auto eol=lf
+
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.jar binary
+*.png binary
