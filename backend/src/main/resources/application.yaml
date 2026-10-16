@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: czujka
+  threads:
+    virtual:
+      enabled: true
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/czujka}
+    username: ${DB_USER:czujka}
+    password: ${DB_PASSWORD:czujka}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+czujka:
+  ingestion:
+    enabled: true
+    interval: PT1M
+  sources:
+    mock:
+      enabled: true
