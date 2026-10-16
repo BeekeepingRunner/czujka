@@ -12,8 +12,8 @@ Events have a location: a point or an area such as a county or voivodeship. Key 
 
 - **PostgreSQL with the PostGIS extension**, with geometries stored in WGS 84 (`SRID 4326`).
 - Schema migrations with **Flyway**.
-- Spatial queries run in SQL (`ST_Intersects`, `ST_DWithin`) and are called from Spring Data JPA /
-  JdbcClient, with Hibernate Spatial where it helps.
+- Spatial queries are written in plain SQL (`ST_MakeEnvelope`, `ST_DWithin`) and run through Spring's
+  `JdbcClient`. No JPA or Hibernate Spatial: the few queries we need stay explicit and easy to read.
 
 ## Alternatives considered
 
