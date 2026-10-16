@@ -1,8 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
-import { type GeoJSONSource, MapLibreMap, NavigationControl, Popup } from 'maplibre-gl'
+import { type GeoJSONSource, MapLibreMap, NavigationControl, Popup, setWorkerUrl } from 'maplibre-gl'
+import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'
 import type { ThreatEvent } from '../api/events'
 import { SEVERITY_COLORS, toFeatureCollection } from './eventFeatures'
 import { eventPopupContent } from './eventPopup'
+
+// MapLibre 6 looks for its worker next to its own module, which no longer exists once Vite bundles the app.
+// Importing the worker with `?url` makes Vite emit it as a separate file, and we tell MapLibre where it is.
+setWorkerUrl(maplibreWorkerUrl)
 
 const BASE_STYLE = 'https://tiles.openfreemap.org/styles/positron'
 const POLAND_CENTER: [number, number] = [19.1, 52.0]
