@@ -29,7 +29,7 @@ public class EventRepository {
                         INSERT INTO threat_event (source, external_id, category, severity, title, description,
                                                   location, starts_at, ends_at, url)
                         VALUES (:source, :externalId, :category, :severity, :title, :description,
-                                ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326), :startsAt, :endsAt, :url)
+                                ST_Point(:longitude, :latitude, 4326), :startsAt, :endsAt, :url)
                         ON CONFLICT (source, external_id) DO UPDATE SET
                             category    = EXCLUDED.category,
                             severity    = EXCLUDED.severity,
