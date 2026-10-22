@@ -13,8 +13,10 @@ The author knows Angular. The project is also a portfolio and a learning exercis
 - **React 19.2** — the largest ecosystem for map-heavy UIs, and a small mental model (components + hooks).
   It also adds a second popular framework to the author's CV next to Angular.
 - **Vite 8** (Rolldown bundler) — fast dev server and builds, and it proxies `/api` to the backend in dev.
-- **TypeScript** — 7.0 (the native Go compiler) if the lint tooling (typescript-eslint) supports it when
-  we scaffold. Otherwise 6.x, because TS 7.0 does not yet ship a stable programmatic API.
+- **TypeScript 6.0** — the version the official Vite template pins. TS 7.0 (the native Go compiler) is out,
+  but it does not ship a stable programmatic API yet, which tooling depends on. Revisit with TS 7.1.
+- **oxlint** (Rust) for linting, as the Vite template now uses it instead of ESLint, and **Prettier** for formatting.
+- **Vitest + Testing Library** for tests.
 - **MapLibre GL JS 6** — an open-source WebGL vector map with no API key or billing. It handles thousands of
   features and polygon fills (risk per voivodeship). Base map: **OpenFreeMap** tiles (free, OSM data).
 - **TanStack Query v5** — server state: polling, caching, loading/error states.
