@@ -8,6 +8,11 @@ public record BoundingBox(double minLon, double minLat, double maxLon, double ma
     public static final BoundingBox POLAND = new BoundingBox(14.07, 49.0, 24.15, 54.84);
 
     public BoundingBox {
+        // NaN must be rejected explicitly: every comparison with NaN is false, so it would pass the checks below
+        if (!Double.isFinite(minLon) || !Double.isFinite(minLat)
+                || !Double.isFinite(maxLon) || !Double.isFinite(maxLat)) {
+            throw new IllegalArgumentException("bbox must contain finite numbers");
+        }
         if (minLon >= maxLon || minLat >= maxLat) {
             throw new IllegalArgumentException("bbox min values must be lower than max values");
         }
@@ -20,7 +25,8 @@ public record BoundingBox(double minLon, double minLat, double maxLon, double ma
      * Parses {@code "minLon,minLat,maxLon,maxLat"}, the order used by MapLibre's {@code getBounds().toArray().flat()}.
      */
     public static BoundingBox parse(String value) {
-        String[] parts = value.split(",");
+        // limit -1 keeps trailing empty parts, so "1,2,3,4," is rejected instead of silently accepted
+        String[] parts = value.split(",", -1);
         if (parts.length != 4) {
             throw new IllegalArgumentException("bbox must have the form minLon,minLat,maxLon,maxLat");
         }
