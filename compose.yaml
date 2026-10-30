@@ -1,0 +1,36 @@
+# Runs the whole app locally: docker compose up --build, then open http://localhost:8080
+name: czujka
+
+services:
+  db:
+    image: postgis/postgis:18-3.6
+    environment:
+      POSTGRES_DB: czujka
+      POSTGRES_USER: czujka
+      POSTGRES_PASSWORD: czujka
+    volumes:
+      - db-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U czujka -d czujka"]
+      interval: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/czujka
+      DB_USER: czujka
+      DB_PASSWORD: czujka
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+volumes:
+  db-data:
