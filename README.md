@@ -17,7 +17,7 @@ docker compose up --build
 
 Open http://localhost:8080. The API is available at http://localhost:8080/api/events.
 
-For local development (JDK 25, Node 24), see [CLAUDE.md](CLAUDE.md#commands).
+For local development (JDK 25, Node 26), see [CLAUDE.md](CLAUDE.md#commands).
 
 ## Documentation
 
