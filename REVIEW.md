@@ -18,6 +18,33 @@ would confirm it.
 
 ## What to check
 
+### Rollback
+
+Every change must be easy to undo. By default the rollback is `git revert` of the merge commit, so check
+that a revert really restores the previous behaviour. If it does not, the PR description has a **Rollback**
+section that says how to undo it. A change that cannot be undone and has no rollback plan is a blocker.
+
+- **One change per PR.** A refactor, a feature and a dependency update are separate PRs, so one can be
+  reverted without the others.
+- **Migrations are forward-only.** Flyway cannot undo a migration, and reverting the code leaves the new
+  schema in place. The previous version of the code must still work with the new schema:
+  - Additive changes are safe: new tables, new nullable columns, new indexes.
+  - Destructive changes (dropping or renaming a column or table, narrowing a type, adding `NOT NULL` to
+    existing data) go in their own PR, after a PR in which the code has stopped using what is removed.
+  - A migration that changes or deletes existing data says in the PR how to restore that data.
+- **Risky behaviour can be switched off without changing code.** A new data source has its
+  `czujka.sources.<source>.enabled` switch, and new behaviour that might misbehave in production gets a
+  property switch too. A property is a faster rollback than a revert.
+- **Ingested data can be repaired.** Upserts overwrite events, so a broken mapping corrupts stored data that
+  a revert does not fix. Check that a fixed version re-fetching the source corrects the events, or that the PR
+  explains how to clean them up.
+- **The backend API changes compatibly.** Add fields instead of renaming or removing them. When a field must
+  go, remove it from the frontend first, so either PR can be reverted on its own.
+- **Versions are locked.** npm dependencies are locked in `package-lock.json`, the Gradle version is set in
+  the wrapper, and images never use `latest`. That way a revert brings back the previous versions. Image tags
+  such as `nginx:1.31-alpine` still get patch updates within their line, so a revert restores the line, not
+  the exact image.
+
 ### Untrusted data and safety
 
 - Text from external sources (titles, descriptions, URLs) is never rendered as HTML. The frontend uses
@@ -86,7 +113,9 @@ What CI does **not** cover, and is worth a look:
   that the map loads and `/api/events` responds.
 - **Frontend runtime libraries** (MapLibre, React, TanStack Query): open the map in a browser.
 
-Minor and patch updates of dev tools with green CI can be merged without more checks.
+Every dependency PR gets a review, minor and patch updates included. Read the release notes, then apply the
+checks above where they fit. One dependency PR is one revert, so do not combine a dependency update with code
+changes.
 
 ## Out of scope
 
