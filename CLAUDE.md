@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Guidance for AI coding agents (and humans) working on Czujka. Product context: [docs/VISION.md](docs/VISION.md).
+Guidance for AI coding agents (and humans) working on Czujka. Product context: [docs/VISION.md](docs/VISION.md). Reviewing a PR: [REVIEW.md](REVIEW.md).
 
 ## Repository layout
 
