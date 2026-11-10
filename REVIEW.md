@@ -26,12 +26,16 @@ section that says how to undo it. A change that cannot be undone and has no roll
 
 - **One change per PR.** A refactor, a feature and a dependency update are separate PRs, so one can be
   reverted without the others.
-- **Migrations are forward-only.** Flyway cannot undo a migration, and reverting the code leaves the new
-  schema in place. The previous version of the code must still work with the new schema:
+- **Migrations are forward-only.** We use Flyway Community, which has no undo migrations (`U<n>__` scripts
+  are a paid feature). Even where they exist, an undo cannot bring back dropped data, and `git revert` does
+  not run them. Reverting the code leaves the new schema in place, so the previous version of the code must
+  still work with it:
   - Additive changes are safe: new tables, new nullable columns, new indexes.
   - Destructive changes (dropping or renaming a column or table, narrowing a type, adding `NOT NULL` to
     existing data) go in their own PR, after a PR in which the code has stopped using what is removed.
   - A migration that changes or deletes existing data says in the PR how to restore that data.
+  - To undo a schema change, add a compensating migration (a new `V<n+1>__` that reverses it). Never
+    delete or edit the applied one.
 - **Risky behaviour can be switched off without changing code.** A new data source has its
   `czujka.sources.<source>.enabled` switch, and new behaviour that might misbehave in production gets a
   property switch too. A property is a faster rollback than a revert.
