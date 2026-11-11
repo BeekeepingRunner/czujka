@@ -1,0 +1,6 @@
+{
+  "version": 8,
+  "name": "Smoke test stand-in for the OpenFreeMap style",
+  "sources": {},
+  "layers": [{ "id": "background", "type": "background", "paint": { "background-color": "#f2f3f0" } }]
+}
