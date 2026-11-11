@@ -83,6 +83,26 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
+      # Start the database in the background while the app images build
+      - name: Start the database
+        run: nohup docker compose up --detach db > /tmp/db.log 2>&1 &
+      # Builds both images with their layers cached in the GitHub Actions cache. When the Gradle or npm
+      # dependencies did not change, their download steps come from the cache. It uses Docker's own builder (no
+      # setup-buildx-action): with the containerd image store it can use the GitHub Actions cache, and the images
+      # land in Docker directly instead of being exported and loaded. Only main writes the cache; pull requests
+      # read it, which saves the upload on every PR run.
+      - name: Build the images
+        uses: docker/bake-action@v7
+        with:
+          source: .
+          files: compose.yaml
+          set: |
+            backend.tags=czujka-backend
+            backend.cache-from=type=gha,scope=backend
+            frontend.tags=czujka-frontend
+            frontend.cache-from=type=gha,scope=frontend
+            ${{ github.ref == 'refs/heads/main' && 'backend.cache-to=type=gha,scope=backend,mode=max' || '' }}
+            ${{ github.ref == 'refs/heads/main' && 'frontend.cache-to=type=gha,scope=frontend,mode=max' || '' }}
       - uses: actions/setup-node@v7
         with:
           node-version: 26
@@ -102,13 +122,13 @@ jobs:
       # and apt mirrors are slow or unreachable from the runners at times. A no-op when the cache hits.
       - run: npx playwright install --only-shell chromium
         working-directory: frontend
-      - run: docker compose up --build --detach --wait
+      - run: docker compose up --no-build --detach --wait
       # The backend has no healthcheck: wait until it returns the mock events (ingestion runs at startup)
       - name: Wait for events from the backend
         run: |
-          for i in $(seq 60); do
+          for i in $(seq 240); do
             if curl -fsS http://localhost:8080/api/events | jq -e 'length > 0' > /dev/null 2>&1; then exit 0; fi
-            sleep 2
+            sleep 0.5
           done
           echo "The backend returned no events within 2 minutes"
           exit 1

@@ -14,6 +14,9 @@ services:
       test: ["CMD-SHELL", "pg_isready -U czujka -d czujka"]
       interval: 5s
       retries: 10
+      # Check every second while the database starts, so the backend can start sooner
+      start_period: 30s
+      start_interval: 1s
 
   backend:
     build: ./backend
