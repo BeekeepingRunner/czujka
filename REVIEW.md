@@ -93,8 +93,8 @@ section that says how to undo it. A change that cannot be undone and has no roll
 
 - A change to the backend JSON shape is matched in `frontend/src/api/events.ts`, in the same PR.
 - Invalid input returns `400` with an RFC 9457 problem body (through `ApiExceptionHandler`), not `500`.
-- A UI change has been checked in a browser, not only by unit tests. MapLibre problems such as the worker
-  `.mjs` MIME type show up as a blank map that the tests do not catch.
+- A UI change has been checked in a browser, not only by tests. The CI smoke test (`frontend/e2e/`) catches a
+  blank map, such as one from the MapLibre worker `.mjs` MIME type, but not whether the change looks and behaves right.
 
 ### Code quality
 
@@ -106,16 +106,25 @@ section that says how to undo it. A change that cannot be undone and has no roll
 
 ## Dependency PRs (Dependabot)
 
-CI runs the backend build and tests, the frontend lint, format check, tests and build, and a Docker image
-build. It also validates `gradle-wrapper.jar` against the official checksums, so a green CI covers the
-wrapper and you do not need to check the jar by hand.
+CI runs the backend build and tests, and the frontend lint, format check, tests and build. It also validates
+`gradle-wrapper.jar` against the official checksums, so a green CI covers the wrapper and you do not need to
+check the jar by hand. Finally, it starts the whole stack with `docker compose up` and runs a Playwright smoke
+test ([ADR-0005](docs/adr/0005-playwright-smoke-test.md)). That test checks that the map initialises, that the
+MapLibre worker is served as JavaScript, that `/api/events` returns events through nginx and that they reach the
+page, and that there are no console errors or failed requests. So a green CI covers "the map loads" for runtime
+image updates (nginx, JRE, PostGIS) and frontend runtime library updates (MapLibre, React, TanStack Query).
 
 What CI does **not** cover, and is worth a look:
 
 - **Major versions**: read the breaking changes and check each one against how this project uses the library.
-- **Runtime images** (nginx, JRE, PostGIS): CI only builds them. Run `docker compose up --build`, then check
-  that the map loads and `/api/events` responds.
-- **Frontend runtime libraries** (MapLibre, React, TanStack Query): open the map in a browser.
+- **Behaviour beyond loading**: the smoke test does not click popups, pan the map or look at the rendering. For a
+  MapLibre or React major, open the map in a browser and try it.
+- **The real base map**: CI replaces the OpenFreeMap style with a local stand-in, so a change in how tiles or
+  the style load is only visible in a browser.
+
+CI skips PRs that only change Markdown, `docs/` or `.github/dependabot.yml`. If CI ever becomes a required
+status check, replace that `paths-ignore` with a job-level change filter, because a skipped workflow leaves a
+required check pending.
 
 Every dependency PR gets a review, minor and patch updates included. Read the release notes, then apply the
 checks above where they fit. One dependency PR is one revert, so do not combine a dependency update with code

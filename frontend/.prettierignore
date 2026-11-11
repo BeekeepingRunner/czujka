@@ -2,3 +2,5 @@ dist
 node_modules
 public/voivodeships.geojson
 package-lock.json
+test-results
+playwright-report

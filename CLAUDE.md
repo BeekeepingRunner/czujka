@@ -22,6 +22,7 @@ Guidance for AI coding agents (and humans) working on Czujka. Product context: [
 | Frontend dev server (proxies `/api` to :8080) | `cd frontend && npm run dev` |
 | Frontend checks | `cd frontend && npm run lint && npm run format:check && npm test && npm run build` |
 | Whole stack | `docker compose up --build`, then open http://localhost:8080 |
+| Smoke test against the running stack (first time: `npx playwright install chromium`) | `cd frontend && npm run test:e2e` |
 
 ## How to add a new data source
 

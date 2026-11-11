@@ -13,5 +13,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
+    // e2e/ holds the Playwright smoke test, which runs against the full stack (npm run test:e2e)
+    include: ['src/**/*.test.{ts,tsx}'],
   },
 })

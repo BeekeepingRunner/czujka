@@ -1,9 +1,21 @@
 name: CI
 
+# Changes that only touch the ignored paths cannot affect the build, so they run no CI. .editorconfig and
+# .gitattributes are not ignored on purpose: Prettier reads .editorconfig, and .gitattributes sets the line
+# endings of files such as gradlew and nginx.conf. If CI ever becomes a required status check, replace this
+# with a job-level change filter, because a skipped workflow leaves a required check pending.
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - ".github/dependabot.yml"
   pull_request:
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - ".github/dependabot.yml"
 
 permissions:
   contents: read
@@ -49,9 +61,67 @@ jobs:
       - run: npm test
       - run: npm run build
 
-  docker:
+  # The docker job runs in parallel, and its smoke test is pointless once a unit-test job fails. This job then cancels
+  # the run. It waits for both unit-test jobs, so their results are never hidden; only the docker job is still
+  # running by then. (GitHub cannot cancel a single job, only the whole run.)
+  cancel-smoke-test:
     needs: [backend, frontend]
+    if: failure()
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - run: gh run cancel ${{ github.run_id }} --repo ${{ github.repository }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  # Builds the images, starts the whole stack and runs the Playwright smoke test against it.
+  # Runs in parallel with the other jobs (no `needs`) to keep CI short; the repo is public, so minutes are free.
+  docker:
+    runs-on: ubuntu-latest
+    # Normally about 2 minutes; fail fast instead of GitHub's 6-hour default if something hangs
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
-      - run: docker compose build
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - name: Read the Playwright version
+        id: playwright
+        working-directory: frontend
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      # Only the headless shell, and no --with-deps: the runner image already has Chromium's system libraries,
+      # and apt mirrors are slow or unreachable from the runners at times. A no-op when the cache hits.
+      - run: npx playwright install --only-shell chromium
+        working-directory: frontend
+      - run: docker compose up --build --detach --wait
+      # The backend has no healthcheck: wait until it returns the mock events (ingestion runs at startup)
+      - name: Wait for events from the backend
+        run: |
+          for i in $(seq 60); do
+            if curl -fsS http://localhost:8080/api/events | jq -e 'length > 0' > /dev/null 2>&1; then exit 0; fi
+            sleep 2
+          done
+          echo "The backend returned no events within 2 minutes"
+          exit 1
+      - run: npm run test:e2e
+        working-directory: frontend
+      - if: failure()
+        run: docker compose logs
+      - if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: |
+            frontend/playwright-report
+            frontend/test-results
+      - if: always()
+        run: docker compose down --volumes
