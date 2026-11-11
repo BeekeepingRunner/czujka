@@ -61,6 +61,20 @@ jobs:
       - run: npm test
       - run: npm run build
 
+  # The docker job runs in parallel, and its smoke test is pointless once a unit-test job fails. This job then cancels
+  # the run. It waits for both unit-test jobs, so their results are never hidden; only the docker job is still
+  # running by then. (GitHub cannot cancel a single job, only the whole run.)
+  cancel-smoke-test:
+    needs: [backend, frontend]
+    if: failure()
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - run: gh run cancel ${{ github.run_id }} --repo ${{ github.repository }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+
   # Builds the images, starts the whole stack and runs the Playwright smoke test against it.
   # Runs in parallel with the other jobs (no `needs`) to keep CI short; the repo is public, so minutes are free.
   docker:
