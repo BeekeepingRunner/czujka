@@ -33,6 +33,9 @@ these parts, so every one needed a manual browser check.
 
 ## Consequences
 
-- The `docker` job takes a few minutes longer, including downloading Chromium (not cached yet).
+- The `docker` job takes about 2 minutes, mostly building the images. It runs in parallel with the backend
+  and frontend jobs, so the CI wall-clock time grows by about a minute rather than by the whole job. The Chromium
+  headless shell is cached per Playwright version, and system packages are not installed with `--with-deps`
+  because the runner image already has them.
 - `@playwright/test` is one more dev dependency for Dependabot.
 - UI changes still need a look in a browser. The smoke test proves that the map works, not that it looks right.
