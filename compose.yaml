@@ -11,7 +11,9 @@ services:
     volumes:
       - db-data:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U czujka -d czujka"]
+      # Over TCP (-h): while a new volume is initialised, PostgreSQL runs a temporary server that listens only on the
+      # Unix socket. Without -h the check would pass against that one, before the backend can connect.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U czujka -d czujka"]
       interval: 5s
       retries: 10
       # Check every second while the database starts, so the backend can start sooner
