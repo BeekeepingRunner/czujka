@@ -41,3 +41,24 @@ Guidance for AI coding agents (and humans) working on Czujka. Product context: [
 - Workflow: one branch + PR per change, Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:` …).
   CI must be green before merging.
 - Record significant technical decisions as a new ADR.
+
+## Dependencies and supply chain
+
+Every dependency that is added or changed, by hand or by Dependabot, keeps these protections
+([ADR-0006](docs/adr/0006-dependency-supply-chain.md)):
+
+- **GitHub Actions** use a full commit SHA with the exact version in a comment:
+  `uses: actions/checkout@<40-character sha> # v7.0.1`. Never a tag (`@v7`) or a branch.
+- **Docker images** (Dockerfiles and `compose.yaml`) use tag and digest: `node:26-alpine@sha256:<digest>`, where the
+  digest is the multi-arch index digest of that tag. Never `latest` and never a tag alone.
+- **Gradle** is upgraded with
+  `./gradlew wrapper --gradle-version <v> --gradle-distribution-sha256-sum <sha>`, using the SHA-256 Gradle
+  publishes (`https://services.gradle.org/distributions/gradle-<v>-bin.zip.sha256`). `distributionSha256Sum` stays.
+- **npm** installs with `npm ci` and `ignore-scripts=true` stays in `frontend/.npmrc`. Never work around it
+  (`--ignore-scripts=false`, `npm rebuild`). A package that needs an install script is a decision for the user,
+  made in its own PR.
+- **A new dependency**, chosen by hand: check it is the real package (exact name, publisher, source repository),
+  not a look-alike. Prefer a release at least 5 days old, like the Dependabot cooldown, and fewer dependencies
+  over more. Commit the lockfile change.
+- **A new place with dependencies** (a new Dockerfile, workflow or package directory) gets an entry in
+  `.github/dependabot.yml` with `cooldown: default-days: 5`.
