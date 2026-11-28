@@ -38,3 +38,10 @@ updates:
       # Odd Node majors are never LTS; bump to the next even (LTS) major by hand
       - dependency-name: node
         update-types: ["version-update:semver-major"]
+  # The PostGIS image in compose.yaml (pinned by digest, like the Dockerfile base images)
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 5
