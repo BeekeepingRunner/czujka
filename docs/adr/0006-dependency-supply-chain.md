@@ -32,12 +32,17 @@ every package against the `integrity` hash in `package-lock.json`, and the CI to
 - **The Gradle distribution is checked against its SHA-256** (`distributionSha256Sum` in
   `gradle-wrapper.properties`, the value Gradle publishes for each release). CI validates `gradle-wrapper.jar`, and
   the jar refuses a downloaded zip with a different hash. Covers case 1 for Gradle itself.
+- **npm install scripts never run** (`ignore-scripts=true` in `frontend/.npmrc`, also copied into the frontend
+  Docker build). A `postinstall` script runs on every install with our permissions, which is how malicious npm
+  releases usually strike (the Shai-Hulud worm, September 2025). No installed package needs one today; a future
+  one that does has to be allowed on purpose.
 
 Still under consideration, and not decided here:
 
 - Gradle dependency verification (`gradle/verification-metadata.xml`), case 1 for Maven dependencies. It needs
-  the file regenerated on every dependency change.
-- `npm ci --ignore-scripts`: stops install scripts of npm packages from running.
+  the file regenerated on every dependency change. Tracked with PGP signatures in issue #58.
+- Defences against malicious package code that runs at build time, not install time (install-script allowlist
+  check, `npm audit signatures`, isolating local npm runs, and more). Tracked in issue #62.
 
 ## Alternatives considered
 
