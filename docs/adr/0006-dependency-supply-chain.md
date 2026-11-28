@@ -29,10 +29,12 @@ every package against the `integrity` hash in `package-lock.json`, and the CI to
 - **Docker images pinned by digest** (`node:26-alpine@sha256:…`), including the PostGIS image in `compose.yaml`,
   which Dependabot now watches through the `docker-compose` ecosystem. Covers cases 1 and 2. A rebuilt image
   under the same tag now arrives as a Dependabot PR instead of silently on the next build.
+- **The Gradle distribution is checked against its SHA-256** (`distributionSha256Sum` in
+  `gradle-wrapper.properties`, the value Gradle publishes for each release). CI validates `gradle-wrapper.jar`, and
+  the jar refuses a downloaded zip with a different hash. Covers case 1 for Gradle itself.
 
 Still under consideration, and not decided here:
 
-- `distributionSha256Sum` in `gradle-wrapper.properties` (case 1 for the Gradle distribution).
 - Gradle dependency verification (`gradle/verification-metadata.xml`), case 1 for Maven dependencies. It needs
   the file regenerated on every dependency change.
 - `npm ci --ignore-scripts`: stops install scripts of npm packages from running.
