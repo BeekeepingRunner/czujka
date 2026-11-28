@@ -44,10 +44,9 @@ section that says how to undo it. A change that cannot be undone and has no roll
   explains how to clean them up.
 - **The backend API changes compatibly.** Add fields instead of renaming or removing them. When a field must
   go, remove it from the frontend first, so either PR can be reverted on its own.
-- **Versions are locked.** npm dependencies are locked in `package-lock.json`, the Gradle version is set in
-  the wrapper, and images never use `latest`. That way a revert brings back the previous versions. Image tags
-  such as `nginx:1.31-alpine` still get patch updates within their line, so a revert restores the line, not
-  the exact image.
+- **Versions are locked.** npm dependencies are locked in `package-lock.json`, the Gradle version and its
+  checksum are set in the wrapper, actions are pinned by commit SHA and images by digest. That way a revert
+  brings back exactly the previous versions.
 
 ### Untrusted data and safety
 
@@ -115,6 +114,12 @@ page, and that there are no console errors or failed requests. So a green CI cov
 image updates (nginx, JRE, PostGIS) and frontend runtime library updates (MapLibre, React, TanStack Query).
 
 What CI does **not** cover, and is worth a look:
+
+- **The supply-chain rules** in CLAUDE.md ("Dependencies and supply chain", ADR-0006): actions keep a full SHA
+  with a matching version comment, images keep a digest, `distributionSha256Sum` matches the new Gradle version,
+  and `frontend/.npmrc` still has `ignore-scripts=true`. A new `"hasInstallScript": true` in the
+  `package-lock.json` diff means a package started shipping an install script. That is a red flag even though
+  the script will not run: find out why before merging.
 
 - **Major versions**: read the breaking changes and check each one against how this project uses the library.
 - **Behaviour beyond loading**: the smoke test does not click popups, pan the map or look at the rendering. For a
